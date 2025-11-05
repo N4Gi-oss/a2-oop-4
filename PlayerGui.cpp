@@ -11,6 +11,19 @@ PlayerGUI::PlayerGUI() {
     addAndMakeVisible(loopButton);
     loopButton.addListener(this);
 
+    addAndMakeVisible(positionSlider);
+    positionSlider.setRange(0.0, 1.0, 0.0001);
+    positionSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    positionSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    positionSlider.addListener(this);
+
+    addAndMakeVisible(positionLabel);
+    positionLabel.setJustificationType(juce::Justification::centredLeft);
+    positionLabel.setMinimumHorizontalScale(1.0f);
+
+    startTimerHz(10);
+
+
 
     // Volume slider
     volumeSlider.setRange(0.0, 1.0, 0.01);
@@ -23,6 +36,7 @@ PlayerGUI::PlayerGUI() {
 }
 
 PlayerGUI::~PlayerGUI() {
+    stopTimer();
 }
 
 void PlayerGUI::resized()
@@ -50,7 +64,14 @@ void PlayerGUI::resized()
 
 
    
+    int labelW = 70;
+    int sliderH = 25;
+    int yPos = 120; 
+
+
     volumeSlider.setBounds(20, 150, getWidth() - 40, 30);
+    positionSlider.setBounds(20, yPos, getWidth() - 40 - labelW, sliderH);
+    positionLabel.setBounds(getWidth() - 20 - labelW, yPos, labelW, sliderH);
 }
 
 
@@ -169,5 +190,66 @@ void PlayerGUI::buttonClicked(juce::Button* button)
 void PlayerGUI::sliderValueChanged(juce::Slider* slider)
 {
     if (slider == &volumeSlider)
+    {
         playerAudio.setGain((float)slider->getValue());
+    }
+    else if (slider == &positionSlider)
+    {
+      
+        if (playerAudio.getLength() > 0.0)
+        {
+            double total = playerAudio.getLength();
+            double seconds = positionSlider.getValue() * total;
+
+            int s = (int)std::round(seconds);
+            int mins = s / 60;
+            int secs = s % 60;
+            positionLabel.setText(juce::String::formatted("%02d:%02d", mins, secs), juce::dontSendNotification);
+        }
+    }
 }
+
+void PlayerGUI::sliderDragStarted(juce::Slider* slider)
+{
+    if (slider == &positionSlider)
+        isDraggingPosition = true;
+}
+
+void PlayerGUI::sliderDragEnded(juce::Slider* slider)
+{
+    if (slider == &positionSlider)
+    {
+        isDraggingPosition = false;
+
+        double total = playerAudio.getLength();
+        if (total > 0.0)
+        {
+            double newPos = positionSlider.getValue() * total;
+            playerAudio.setPosition(newPos);
+        }
+    }
+}
+void PlayerGUI::timerCallback()
+{
+    if (!isDraggingPosition)
+    {
+        double total = playerAudio.getLength();
+        if (total > 0.0)
+        {
+            double pos = playerAudio.getPosition();
+            double norm = pos / total;
+            positionSlider.setValue(norm, juce::dontSendNotification);
+
+            int s = (int)std::round(pos);
+            int mins = s / 60;
+            int secs = s % 60;
+            positionLabel.setText(juce::String::formatted("%02d:%02d", mins, secs), juce::dontSendNotification);
+        }
+        else
+        {
+            positionSlider.setValue(0.0, juce::dontSendNotification);
+            positionLabel.setText("00:00", juce::dontSendNotification);
+        }
+    }
+}
+
