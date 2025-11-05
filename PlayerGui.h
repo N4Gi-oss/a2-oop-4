@@ -4,7 +4,8 @@
 
 class PlayerGUI : public juce::Component,
     public juce::Button::Listener,
-    public juce::Slider::Listener
+    public juce::Slider::Listener,
+    public juce::Timer
 {
 public:
     PlayerGUI();
@@ -16,6 +17,11 @@ public:
     void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
     void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill);
     void releaseResources();
+    void buttonClicked(juce::Button* button) override;
+    void sliderValueChanged(juce::Slider* slider) override;
+    void sliderDragStarted(juce::Slider* slider) override;   
+    void sliderDragEnded(juce::Slider* slider) override;    
+    void timerCallback() override;
 
 private:
     PlayerAudio playerAudio;
@@ -30,19 +36,20 @@ private:
     juce::TextButton startButton{ "go to start" };
     juce::TextButton endButton{ "go to end" };
     juce::ToggleButton loopButton{ "Loop" };
+    juce::Slider positionSlider;
+    juce::Label positionLabel{ {}, "00:00" };
+    
     juce::Slider volumeSlider;
 
     // for mute 
     float previousVolume = 0.5f;
     bool isMuted = false;
-    
+    bool isDraggingPosition = false;
     //---------------//
 
     std::unique_ptr<juce::FileChooser> fileChooser;
 
-    // Event handlers 
-    void buttonClicked(juce::Button* button) override;
-    void sliderValueChanged(juce::Slider* slider) override;
+    
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlayerGUI)
 };
