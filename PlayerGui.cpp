@@ -1,11 +1,22 @@
 
 
+
 #include "PlayerGui.h"
 PlayerGUI::PlayerGUI() {
     for (auto* btn : { &loadButton, &restartButton , &stopButton, &playButton, &pauseButton , &startButton, &endButton, &muteButton })
     {
         btn->addListener(this);
         addAndMakeVisible(btn);
+
+        addAndMakeVisible(setAButton);
+        setAButton.addListener(this);
+
+        addAndMakeVisible(setBButton);
+        setBButton.addListener(this);
+
+        addAndMakeVisible(abLoopButton);
+        abLoopButton.addListener(this);
+
     }
 
     addAndMakeVisible(loopButton);
@@ -61,6 +72,11 @@ void PlayerGUI::resized()
     startButton.setBounds(x, y2, buttonWidth, buttonHeight); x += buttonWidth + gap;
     endButton.setBounds(x, y2, buttonWidth, buttonHeight); x += buttonWidth + gap;
     loopButton.setBounds(x, y2, buttonWidth, buttonHeight); x += buttonWidth + gap;
+
+    setAButton.setBounds(x, y2, buttonWidth, buttonHeight); x += buttonWidth + gap;
+    setBButton.setBounds(x, y2, buttonWidth, buttonHeight); x += buttonWidth + gap;
+    abLoopButton.setBounds(x, y2, buttonWidth, buttonHeight); x += buttonWidth + gap;
+
 
 
    
@@ -182,6 +198,28 @@ void PlayerGUI::buttonClicked(juce::Button* button)
             DBG("Loop OFF");
 
     }
+    // --- A-B Looping ---
+    if (button == &setAButton)
+    {
+        pointA = playerAudio.getPosition();
+        DBG("Set A at: " << pointA);
+    }
+
+    if (button == &setBButton)
+    {
+        pointB = playerAudio.getPosition();
+        DBG("Set B at: " << pointB);
+    }
+
+    if (button == &abLoopButton)
+    {
+        isABLooping = abLoopButton.getToggleState();
+        if (isABLooping)
+            DBG("A-B Loop Activated");
+        else
+            DBG("A-B Loop Deactivated");
+    }
+
 
 
 
@@ -251,5 +289,16 @@ void PlayerGUI::timerCallback()
             positionLabel.setText("00:00", juce::dontSendNotification);
         }
     }
+    // --- Handle A-B Loop ---
+    if (isABLooping && pointB > pointA)
+    {
+        double currentPos = playerAudio.getPosition();
+        if (currentPos >= pointB)
+        {
+            playerAudio.setPosition(pointA);
+            playerAudio.play(); // start again from A
+        }
+    }
+
 }
 
