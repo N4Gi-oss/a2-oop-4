@@ -38,6 +38,10 @@ private:
     juce::ToggleButton loopButton{ "Loop" };
     juce::Slider positionSlider;
     juce::Label positionLabel{ {}, "00:00" };
+    juce::TextButton setAButton{ "Set A" };
+    juce::TextButton setBButton{ "Set B" };
+    juce::ToggleButton abLoopButton{ "A-B Loop" };
+
     
     juce::Slider volumeSlider;
 
@@ -45,6 +49,11 @@ private:
     float previousVolume = 0.5f;
     bool isMuted = false;
     bool isDraggingPosition = false;
+
+    double pointA = 0.0;
+    double pointB = 0.0;
+    bool isABLooping = false;
+
     //---------------//
 
     std::unique_ptr<juce::FileChooser> fileChooser;
