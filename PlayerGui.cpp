@@ -1,23 +1,20 @@
-
-
-
 #include "PlayerGui.h"
+
 PlayerGUI::PlayerGUI() {
     for (auto* btn : { &loadButton, &restartButton , &stopButton, &playButton, &pauseButton , &startButton, &endButton, &muteButton })
     {
         btn->addListener(this);
         addAndMakeVisible(btn);
-
-        addAndMakeVisible(setAButton);
-        setAButton.addListener(this);
-
-        addAndMakeVisible(setBButton);
-        setBButton.addListener(this);
-
-        addAndMakeVisible(abLoopButton);
-        abLoopButton.addListener(this);
-
     }
+
+    addAndMakeVisible(setAButton);
+    setAButton.addListener(this);
+
+    addAndMakeVisible(setBButton);
+    setBButton.addListener(this);
+
+    addAndMakeVisible(abLoopButton);
+    abLoopButton.addListener(this);
 
     addAndMakeVisible(loopButton);
     loopButton.addListener(this);
@@ -32,18 +29,25 @@ PlayerGUI::PlayerGUI() {
     positionLabel.setJustificationType(juce::Justification::centredLeft);
     positionLabel.setMinimumHorizontalScale(1.0f);
 
-    startTimerHz(10);
-
-
-
     // Volume slider
     volumeSlider.setRange(0.0, 1.0, 0.01);
     volumeSlider.setValue(0.5);
     volumeSlider.addListener(this);
     addAndMakeVisible(volumeSlider);
 
-   
+    
+    speedSlider.setRange(0.5, 2.0, 0.01);
+    speedSlider.setValue(1.0);
+    speedSlider.addListener(this);
+    addAndMakeVisible(speedSlider);
 
+    addAndMakeVisible(speedLabel);
+    speedLabel.setText("Speed: 1.0x", juce::dontSendNotification);
+
+   
+    addAndMakeVisible(progressBar);
+
+    startTimerHz(10);
 }
 
 PlayerGUI::~PlayerGUI() {
@@ -56,10 +60,9 @@ void PlayerGUI::resized()
     int buttonHeight = 40;
     int gap = 15;
     int x = 20;
-    int y1 = 20;     
-    int y2 = 80;    
+    int y1 = 20;
+    int y2 = 80;
 
-    
     loadButton.setBounds(x, y1, buttonWidth, buttonHeight); x += buttonWidth + gap;
     restartButton.setBounds(x, y1, buttonWidth, buttonHeight); x += buttonWidth + gap;
     stopButton.setBounds(x, y1, buttonWidth, buttonHeight); x += buttonWidth + gap;
@@ -67,29 +70,29 @@ void PlayerGUI::resized()
     pauseButton.setBounds(x, y1, buttonWidth, buttonHeight); x += buttonWidth + gap;
     muteButton.setBounds(x, y1, buttonWidth, buttonHeight); x += buttonWidth + gap;
 
-   
     x = 20;
     startButton.setBounds(x, y2, buttonWidth, buttonHeight); x += buttonWidth + gap;
     endButton.setBounds(x, y2, buttonWidth, buttonHeight); x += buttonWidth + gap;
     loopButton.setBounds(x, y2, buttonWidth, buttonHeight); x += buttonWidth + gap;
-
     setAButton.setBounds(x, y2, buttonWidth, buttonHeight); x += buttonWidth + gap;
     setBButton.setBounds(x, y2, buttonWidth, buttonHeight); x += buttonWidth + gap;
     abLoopButton.setBounds(x, y2, buttonWidth, buttonHeight); x += buttonWidth + gap;
 
-
-
-   
     int labelW = 70;
     int sliderH = 25;
-    int yPos = 120; 
-
+    int yPos = 120;
 
     volumeSlider.setBounds(20, 150, getWidth() - 40, 30);
     positionSlider.setBounds(20, yPos, getWidth() - 40 - labelW, sliderH);
     positionLabel.setBounds(getWidth() - 20 - labelW, yPos, labelW, sliderH);
-}
 
+   
+    speedSlider.setBounds(20, 190, getWidth() - 40 - labelW, 25);
+    speedLabel.setBounds(getWidth() - 20 - labelW, 190, labelW, 25);
+
+   
+    progressBar.setBounds(20, 230, getWidth() - 40, 20);
+}
 
 void PlayerGUI::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
@@ -147,8 +150,6 @@ void PlayerGUI::buttonClicked(juce::Button* button)
         playerAudio.setPosition(0.0);
     }
 
-    // mute 
-
     if (button == &muteButton)
     {
         if (!isMuted)
@@ -166,7 +167,6 @@ void PlayerGUI::buttonClicked(juce::Button* button)
         }
     }
 
-    // play and pause
     if (button == &playButton)
     {
         playerAudio.play();
@@ -174,10 +174,9 @@ void PlayerGUI::buttonClicked(juce::Button* button)
 
     if (button == &pauseButton)
     {
-        playerAudio.pause();  
+        playerAudio.pause();
     }
 
-    // go to start/end
     if (button == &startButton)
     {
         playerAudio.setPosition(0.0);
@@ -191,14 +190,14 @@ void PlayerGUI::buttonClicked(juce::Button* button)
     {
         bool loopOn = loopButton.getToggleState();
         playerAudio.setLooping(loopOn);
-        
+
         if (loopOn)
             DBG("Loop ON");
         else
             DBG("Loop OFF");
 
     }
-    // --- A-B Looping ---
+
     if (button == &setAButton)
     {
         pointA = playerAudio.getPosition();
@@ -219,10 +218,6 @@ void PlayerGUI::buttonClicked(juce::Button* button)
         else
             DBG("A-B Loop Deactivated");
     }
-
-
-
-
 }
 
 void PlayerGUI::sliderValueChanged(juce::Slider* slider)
@@ -231,19 +226,11 @@ void PlayerGUI::sliderValueChanged(juce::Slider* slider)
     {
         playerAudio.setGain((float)slider->getValue());
     }
-    else if (slider == &positionSlider)
+    else if (slider == &speedSlider)
     {
-      
-        if (playerAudio.getLength() > 0.0)
-        {
-            double total = playerAudio.getLength();
-            double seconds = positionSlider.getValue() * total;
-
-            int s = (int)std::round(seconds);
-            int mins = s / 60;
-            int secs = s % 60;
-            positionLabel.setText(juce::String::formatted("%02d:%02d", mins, secs), juce::dontSendNotification);
-        }
+        double newSpeed = slider->getValue();
+        playerAudio.setSpeed(newSpeed);
+        speedLabel.setText(juce::String::formatted("Speed: %.1fx", newSpeed), juce::dontSendNotification);
     }
 }
 
@@ -267,6 +254,7 @@ void PlayerGUI::sliderDragEnded(juce::Slider* slider)
         }
     }
 }
+
 void PlayerGUI::timerCallback()
 {
     if (!isDraggingPosition)
@@ -282,23 +270,27 @@ void PlayerGUI::timerCallback()
             int mins = s / 60;
             int secs = s % 60;
             positionLabel.setText(juce::String::formatted("%02d:%02d", mins, secs), juce::dontSendNotification);
+
+            
+            progress = norm;
+            progressBar.repaint();
         }
         else
         {
             positionSlider.setValue(0.0, juce::dontSendNotification);
             positionLabel.setText("00:00", juce::dontSendNotification);
+            progress = 0.0;
+            progressBar.repaint();
         }
     }
-    // --- Handle A-B Loop ---
+
     if (isABLooping && pointB > pointA)
     {
         double currentPos = playerAudio.getPosition();
         if (currentPos >= pointB)
         {
             playerAudio.setPosition(pointA);
-            playerAudio.play(); // start again from A
+            playerAudio.play();
         }
     }
-
 }
-

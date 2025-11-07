@@ -1,10 +1,8 @@
-﻿
-#include "PlayerAudio.h"
+﻿#include "PlayerAudio.h"
 
 PlayerAudio::PlayerAudio()
 {
     formatManager.registerBasicFormats();
-
 }
 
 PlayerAudio::~PlayerAudio()
@@ -14,11 +12,12 @@ PlayerAudio::~PlayerAudio()
 void PlayerAudio::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
     transportSource.prepareToPlay(samplesPerBlockExpected, sampleRate);
+    resampleSource.prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
 void PlayerAudio::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill)
 {
-    transportSource.getNextAudioBlock(bufferToFill);
+    resampleSource.getNextAudioBlock(bufferToFill);
 
     if (looping && transportSource.hasStreamFinished())
     {
@@ -29,6 +28,7 @@ void PlayerAudio::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferTo
 
 void PlayerAudio::releaseResources()
 {
+    resampleSource.releaseResources();
     transportSource.releaseResources();
 }
 
@@ -51,6 +51,8 @@ bool PlayerAudio::loadFile(const juce::File& file)
                 0,
                 nullptr,
                 reader->sampleRate);
+
+            resampleSource.setResamplingRatio(speed); 
             transportSource.start();
         }
     }
@@ -66,7 +68,6 @@ void PlayerAudio::pause()
 {
     transportSource.stop();
 }
-
 
 void PlayerAudio::stop() {
     transportSource.stop();
@@ -85,6 +86,15 @@ void PlayerAudio::setLooping(bool shouldLoop)
     looping = shouldLoop;
 }
 
+
+void PlayerAudio::setSpeed(double ratio)
+{
+    if (ratio > 0.1 && ratio <= 3.0)
+    {
+        speed = ratio;
+        resampleSource.setResamplingRatio(ratio);
+    }
+}
 
 double PlayerAudio::getPosition() const {
     return transportSource.getCurrentPosition();

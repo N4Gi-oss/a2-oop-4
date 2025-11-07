@@ -21,13 +21,19 @@ public:
     double getLength() const;
     void setLooping(bool shouldLoop);
 
+    
+    void setSpeed(double ratio);
+    double getSpeed() const { return speed; }
 
 private:
     juce::AudioFormatManager formatManager;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
     juce::AudioTransportSource transportSource;
-    bool looping = false; 
+    bool looping = false;
 
+    
+    juce::ResamplingAudioSource resampleSource{ &transportSource, false, 2 };
+    double speed = 1.0;
 
     // JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlayerAudio) 
 };

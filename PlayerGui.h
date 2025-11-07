@@ -19,8 +19,8 @@ public:
     void releaseResources();
     void buttonClicked(juce::Button* button) override;
     void sliderValueChanged(juce::Slider* slider) override;
-    void sliderDragStarted(juce::Slider* slider) override;   
-    void sliderDragEnded(juce::Slider* slider) override;    
+    void sliderDragStarted(juce::Slider* slider) override;
+    void sliderDragEnded(juce::Slider* slider) override;
     void timerCallback() override;
 
 private:
@@ -42,8 +42,15 @@ private:
     juce::TextButton setBButton{ "Set B" };
     juce::ToggleButton abLoopButton{ "A-B Loop" };
 
-    
     juce::Slider volumeSlider;
+
+    
+    juce::Slider speedSlider;
+    juce::Label speedLabel{ {}, "Speed: 1.0x" };
+
+    
+    double progress = 0.0;
+    juce::ProgressBar progressBar{ progress };
 
     // for mute 
     float previousVolume = 0.5f;
@@ -54,11 +61,7 @@ private:
     double pointB = 0.0;
     bool isABLooping = false;
 
-    //---------------//
-
     std::unique_ptr<juce::FileChooser> fileChooser;
-
-    
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlayerGUI)
 };
