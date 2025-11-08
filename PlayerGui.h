@@ -11,6 +11,7 @@ class PlayerGUI : public juce::Component,
 public:
     PlayerGUI();
     ~PlayerGUI() override;
+    //hooh
 
     void paint(juce::Graphics& g) override;
     void resized() override;
